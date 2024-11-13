@@ -1,6 +1,15 @@
 import api from "@/lib/api";
+import { TrVesselAssessment } from "@/lib/types/TrVesselAssessment.types";
 import { TrVesselAssessmentDetail } from "@/lib/types/TrVesselAssessmentDetail.types";
 import { AxiosResponse } from "axios";
+
+interface SaveVesselAssessmentResponse {
+  returnId: any;
+  status: number;
+  data: {
+    returnId: number;
+  };
+}
 
 export const getTrVesselAssessmentDetailForCrew = async (
   id: number
@@ -60,6 +69,31 @@ export const uploadPhotoForCrew = async (
     return response;
   } catch (error) {
     console.error("Error uploading photo:", error);
+    throw error;
+  }
+};
+
+export const getTrVesselAssessmentByLinkForCrew = async (
+  link: string
+): Promise<TrVesselAssessment> => {
+  const response = await api.get<TrVesselAssessment>(
+    `api/vesselAssessmentForCrew/getVesselAssessmentByLink?Link=${link}`
+  );
+  return response.data;
+};
+
+export const saveTrVesselAssessmentForCrew = async (
+  item: Partial<TrVesselAssessment>
+): Promise<AxiosResponse<SaveVesselAssessmentResponse>> => {
+  try {
+    console.log(item);
+    const response = await api.post<SaveVesselAssessmentResponse>(
+      `api/vesselAssessmentForCrew/saveVesselAssessment`,
+      item
+    );
+    return response;
+  } catch (error) {
+    console.error("Error saving Vessel Assessment:", error);
     throw error;
   }
 };
