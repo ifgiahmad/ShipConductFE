@@ -37,6 +37,7 @@ import { getTrVesselAssessmentDetail } from "@/services/service_api_vesselAssess
 import DataTableCrewUpload from "@/components/Data-Table/data-table-crewUpload";
 import UploadPhotoForm from "@/components/form/upload-photo-form";
 import { ColumnDef } from "@tanstack/react-table";
+import { getTrVesselAssessmentDetailForCrew } from "@/services/service_api_vesselAssessmentForCrew";
 
 const CrewUploadForm = () => {
   const router = useRouter();
@@ -179,7 +180,7 @@ const CrewUploadForm = () => {
   }, [periodDate, finalDate]);
 
   const fetchDetail = async () => {
-    const dataDetail = await getTrVesselAssessmentDetail(Number(id));
+    const dataDetail = await getTrVesselAssessmentDetailForCrew(Number(id));
     const groupedData = dataDetail.reduce((acc, item) => {
       const section = item.shipSection ?? "Unknown";
       (acc[section] = acc[section] || []).push(item);
