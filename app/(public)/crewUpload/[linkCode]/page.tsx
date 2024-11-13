@@ -37,7 +37,7 @@ import { getTrVesselAssessmentDetail } from "@/services/service_api_vesselAssess
 import DataTableCrewUpload from "@/components/Data-Table/data-table-crewUpload";
 import UploadPhotoForm from "@/components/form/upload-photo-form";
 import { ColumnDef } from "@tanstack/react-table";
-import { getTrVesselAssessmentDetailForCrew } from "@/services/service_api_vesselAssessmentForCrew";
+import { getTrVesselAssessmentByLinkForCrew, getTrVesselAssessmentDetailForCrew, saveTrVesselAssessmentForCrew } from "@/services/service_api_vesselAssessmentForCrew";
 
 const CrewUploadForm = () => {
   const router = useRouter();
@@ -118,7 +118,7 @@ const CrewUploadForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (typeof linkCode === "string") {
-        const data = await getTrVesselAssessmentByLink(linkCode);
+        const data = await getTrVesselAssessmentByLinkForCrew(linkCode);
         setValue("id", data.id ?? 0);
         setValue("vslName", data.vslName ?? "");
         setValue("vslType", data.vslType ?? "");
@@ -203,7 +203,7 @@ const CrewUploadForm = () => {
       data.mode = "SAVE";
     }
     try {
-      const ret = await saveTrVesselAssessment(data);
+      const ret = await saveTrVesselAssessmentForCrew(data);
       if (ret.status === 200) {
         router.push(`/editById/${id}`);
         toast({
