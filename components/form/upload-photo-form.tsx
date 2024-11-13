@@ -22,6 +22,7 @@ import {
   UploadPhotoTrVesselAssessmentDetailZod,
 } from "@/lib/types/TrVesselAssessmentDetail.types";
 import { toast } from "@/hooks/use-toast";
+import { getTrVesselAssessmentDetailByIdForCrew, uploadPhotoForCrew } from "@/services/service_api_vesselAssessmentForCrew";
 
 type DetailData = z.infer<typeof UploadPhotoTrVesselAssessmentDetailZod>;
 
@@ -69,7 +70,7 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
 
     async function getDataById(id: number) {
       try {
-        const data = await getTrVesselAssessmentDetailById(id);
+        const data = await getTrVesselAssessmentDetailByIdForCrew(id);
         setValue("item", data.item ?? "");
         setValue("shipSection", data.shipSection ?? "");
         setValue("fileName", data.fileName ?? "");
@@ -101,7 +102,7 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
   const onDetailSubmit = async (data: DetailData) => {
     setLoading(true); // Start loading
     try {
-      const response = await uploadPhoto(data);
+      const response = await uploadPhotoForCrew(data);
       if (response.status === 200) {
         onSave();
         toast({
