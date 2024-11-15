@@ -68,6 +68,7 @@ const EditVesselAssessmentForm = () => {
   const [status, setStatus] = useState<string | null>(null);
   const [idHeader, setIdHeader] = useState<number | null>(null);
   const [vslType, setVslType] = useState<string | null>(null);
+  const [idList, setIdList] = useState<number[]>([]);
 
   const {
     setValue,
@@ -145,6 +146,9 @@ const EditVesselAssessmentForm = () => {
   const fetchDetail = async () => {
     const dataDetail = await getTrVesselAssessmentDetail(Number(id));
     setDetail(dataDetail);
+
+    const ids = dataDetail.map((detail: { id: number }) => detail.id);
+    setIdList(ids);
   };
 
   const handleBack = () => {
@@ -162,7 +166,7 @@ const EditVesselAssessmentForm = () => {
       data.mode = "GENERATE LINK";
       data.linkShared = baseUrl + "crewUpload/";
     } else {
-      data.mode = "SAVE";
+      data.mode = "CLOSED";
     }
     try {
       const ret = await saveTrVesselAssessment(data);
@@ -448,7 +452,7 @@ const EditVesselAssessmentForm = () => {
                   >
                     Back
                   </Button>
-                  {status === "OPEN" ? (
+                  {status === "READY" ? (
                     <>
                       {" "}
                       <Button
@@ -456,7 +460,7 @@ const EditVesselAssessmentForm = () => {
                         className="w-full md:w-auto bg-orange-700 hover:bg-orange-500"
                         disabled={loading}
                       >
-                        {loading ? "Generate Link..." : "Generate Link"}
+                        {loading ? "Close..." : "Close"}
                       </Button>
                     </>
                   ) : (
@@ -487,6 +491,7 @@ const EditVesselAssessmentForm = () => {
                   idHeader={Number(idHeader)}
                   vslType={String(vslType)}
                   mode={""}
+                  idList={idList}
                 />
               }
               idHeader={Number(idHeader)}
