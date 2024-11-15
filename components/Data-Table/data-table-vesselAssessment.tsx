@@ -191,7 +191,8 @@ function DataTableVesselAssessment<TData extends HasId>({
                         <Button variant="outline">...</Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        {row.original.status === "CANCEL" ? (
+                        {row.original.status === "CANCEL" ||
+                        row.original.status === "CLOSED" ? (
                           <></>
                         ) : (
                           <>
