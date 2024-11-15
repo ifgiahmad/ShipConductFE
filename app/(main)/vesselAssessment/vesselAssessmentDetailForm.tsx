@@ -56,6 +56,7 @@ interface VesselAssessmentDetailFormProps {
   idHeader: number;
   vslType: string;
   mode: string;
+  idList: number[];
 }
 
 const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
@@ -65,7 +66,10 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
   idHeader,
   vslType,
   mode,
+  idList,
 }) => {
+  const [currentId, setCurrentId] = useState(id);
+  const [currentMode, setCurrentMode] = useState(mode);
   const methods = useForm<saveTrVesselAssessmentDetailDto>({
     resolver: zodResolver(saveTrVesselAssessmentDetailZod),
     defaultValues: {
@@ -88,6 +92,7 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
       isDeleted: false,
     },
   });
+
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [shipSection, setShipSection] = useState<MsShipSection[]>([]);
@@ -115,6 +120,40 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
 
   const handleSearchChange = (type: string, value: string) => {
     setSearchTerms((prev) => ({ ...prev, [type]: value }));
+  };
+
+  const handlePrevious = () => {
+    const currentIndex = idList.indexOf(currentId);
+    if (currentIndex > 0) {
+      setCurrentId(idList[currentIndex - 1]);
+      setCurrentMode("");
+    }
+  };
+
+  const handleSave = async () => {
+    return await handleSubmit(async (data) => {
+      const success = await onDetailSubmit(data);
+      if (success) {
+        onSave();
+      }
+      return success;
+    })();
+  };
+
+  const handleNextWithSave = async () => {
+    return await handleSubmit(async (data) => {
+      const success = await onDetailSubmit(data);
+
+      if (success) {
+        const nextIndex = idList.indexOf(currentId) + 1;
+
+        if (nextIndex < idList.length) {
+          setCurrentId(idList[nextIndex]);
+          setCurrentMode("");
+        }
+      }
+      return success;
+    })();
   };
 
   const applySelection = () => {
@@ -156,8 +195,15 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
 
   useEffect(() => {
     const fetchData = async () => {
-      if (Number(id) > 0) {
-        await getDataById(Number(id));
+      if (currentId > 0) {
+        await getDataById(Number(currentId));
+        if (
+          currentMode === "" ||
+          currentMode === undefined ||
+          currentMode === null
+        ) {
+          mode = currentMode;
+        }
       } else {
         setValue("mode", "CREATE");
 
@@ -178,20 +224,14 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
         }
       }
     };
-
     fetchInterval();
     fetchData();
 
-    // Async function to fetch data by ID
     async function getDataById(Id: Number) {
       try {
         const data = await getTrVesselAssessmentDetailById(Number(Id));
         setValue("item", data.item ?? "");
         setValue("interval", data.interval ?? "");
-        /* if (mode !== "INPUT GRADE") {
-          setValue("grade", data.grade ?? 0);
-          setValue("gradeDescription", data.gradeDescription ?? "");
-        } */
 
         setValue("grade", data.grade ?? 0);
         setValue("gradeDescription", data.gradeDescription ?? "");
@@ -203,12 +243,11 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
         setValue("vesselAssessmentId", data.vesselAssessmentId ?? 0);
         setValue("shipSection", data.shipSection ?? "");
 
-        if (data.shipSection) {
-          setSelectedShipSection(data.shipSection);
-        }
-
-        if (data.normalFileLink) {
-          setImagePreview(data.normalFileLink);
+        setSelectedShipSection(data.shipSection || "");
+        setImagePreview(data.normalFileLink || null);
+        console.log(currentMode);
+        if (currentMode === "" || currentMode === null) {
+          setCurrentMode(data.fileName ? "INPUT GRADE" : "UPLOAD PHOTO");
         }
 
         if (vslType) {
@@ -239,16 +278,7 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
         console.error("Error fetching data grade criteria:", err);
       }
     }
-  }, [
-    id,
-    vslType,
-    setValue,
-    /* setSelectedShipSection,
-    shipSection,
-    interval,
-    selectedInterval,
-    selectedGrade, */
-  ]);
+  }, [currentId, vslType, setValue, currentMode]);
 
   const fetchGradeCriteria = async (grade: number, shipSection: string) => {
     if (!grade || !shipSection) {
@@ -276,40 +306,45 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
   };
 
   const onDetailSubmit = async (data: DetailData) => {
-    console.log(data);
     setLoading(true);
     data.mode = mode;
     if (data.id === 0) {
       data.vesselAssessmentId = idHeader;
     }
     try {
-      if (mode === "UPLOAD PHOTO") {
+      if (currentMode === "UPLOAD PHOTO") {
         const response = await uploadPhoto(data);
         if (response.status === 200) {
-          onSave();
+          /*  onSave(); */
           toast({
             description: "Photo Assessment Detail updated successfully.",
           });
+          return true;
         } else {
           toast({
             variant: "destructive",
             title: "Error",
             description: "Failed to upload photo.",
           });
+          return false;
         }
       } else {
         const ret = await saveTrVesselAssessmentDetail(data);
         if (ret.status === 200) {
-          onSave();
+          if (currentMode !== "INPUT GRADE") {
+            onSave();
+          }
           toast({
             description: "Vessel Assessment Detail updated successfully.",
           });
+          return true;
         } else {
           toast({
             variant: "destructive",
             title: "Error",
             description: "Failed to update data",
           });
+          return false;
         }
       }
     } catch (err) {
@@ -320,6 +355,7 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
           "Error updating data: " +
           (err instanceof Error ? err.message : "Unknown error"),
       });
+      return false;
     } finally {
       setLoading(false); // End loading
     }
@@ -331,7 +367,7 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
         onSubmit={handleSubmit(onDetailSubmit)}
         className="grid grid-cols-1 gap-6"
       >
-        {mode === "DELETE" ? (
+        {currentMode === "DELETE" ? (
           <>
             {" "}
             <Alert>
@@ -342,7 +378,7 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
               </AlertDescription>
             </Alert>
           </>
-        ) : mode === "INPUT GRADE" ? (
+        ) : currentMode === "INPUT GRADE" ? (
           <>
             <FormField
               name="item"
@@ -557,7 +593,7 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
               )}
             />
           </>
-        ) : mode === "UPLOAD PHOTO" ? (
+        ) : currentMode === "UPLOAD PHOTO" ? (
           <>
             <FormField
               name="item"
@@ -792,40 +828,55 @@ const VesselAssessmentDetailForm: React.FC<VesselAssessmentDetailFormProps> = ({
           </>
         )}
 
-        <div className="flex justify-end mt-4">
-          <Button
-            type="button"
-            onClick={onClose}
-            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-          >
-            Close
-          </Button>
-          <Button
-            type="submit"
-            disabled={loading} // Disable button when loading
-            className={`w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-900 text-base font-medium text-white hover:bg-green-700"
-            } sm:ml-3 sm:w-auto sm:text-sm`}
-          >
-            {loading ? (
-              <span className="loading">Saving...</span> // You can replace this with your loading spinner
-            ) : (
-              "Save"
-            )}
-          </Button>
+        <div className="flex justify-between mt-4">
+          <div className="flex space-x-4">
+            <Button
+              type="button"
+              onClick={handlePrevious}
+              disabled={idList.indexOf(currentId) <= 0}
+              className="mt-3 inline-flex justify-center rounded-md border shadow-sm px-4 py-2  bg-gray-400 hover:bg-gray-200 text-gray-700"
+            >
+              Previous
+            </Button>
+            <Button
+              type="button"
+              onClick={handleNextWithSave}
+              disabled={
+                idList.indexOf(currentId) >= idList.length - 1 || loading
+              }
+              className="mt-3 inline-flex justify-center rounded-md border shadow-sm px-4 py-2 bg-gray-400 hover:bg-gray-200 text-gray-700"
+            >
+              Next
+            </Button>
+          </div>
+
+          <div className="flex space-x-4">
+            <Button
+              type="button"
+              onClick={onClose}
+              className="mt-3 inline-flex justify-center rounded-md border shadow-sm px-4 py-2 bg-white text-gray-700"
+            >
+              Close
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSave}
+              disabled={loading}
+              className={`mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 ${
+                loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-900 text-white"
+              }`}
+            >
+              {loading ? "Saving..." : "Save"}
+            </Button>
+          </div>
         </div>
       </form>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogTitle>Select Criteria</DialogTitle>
           <div>
-            {/* <Card className="mb-2">
-              <CardHeader>
-                <CardTitle>Select Criteria</CardTitle>
-              </CardHeader>
-            </Card> */}
             <Card>
               <CardContent>
                 {gradeCriteria.length > 0 ? (
