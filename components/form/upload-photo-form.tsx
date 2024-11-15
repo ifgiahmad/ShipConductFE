@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
@@ -14,15 +14,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  getTrVesselAssessmentDetailById,
-  uploadPhoto,
-} from "@/services/service_api_vesselAssessmentDetail";
+  getTrVesselAssessmentDetailByIdForCrew,
+  uploadPhotoForCrew,
+} from "@/services/service_api_vesselAssessmentForCrew";
 import {
   uploadPhotoTrVesselAssessmentDetailDto,
   UploadPhotoTrVesselAssessmentDetailZod,
 } from "@/lib/types/TrVesselAssessmentDetail.types";
 import { toast } from "@/hooks/use-toast";
-import { getTrVesselAssessmentDetailByIdForCrew, uploadPhotoForCrew } from "@/services/service_api_vesselAssessmentForCrew";
 
 type DetailData = z.infer<typeof UploadPhotoTrVesselAssessmentDetailZod>;
 
@@ -31,6 +30,7 @@ interface UploadPhotoFormProps {
   onSave: () => void;
   id: number;
   idHeader: number;
+  idList: number[];
 }
 
 const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
@@ -38,7 +38,9 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
   onSave,
   id,
   idHeader,
+  idList,
 }) => {
+  const [currentId, setCurrentId] = useState(id);
   const methods = useForm<uploadPhotoTrVesselAssessmentDetailDto>({
     resolver: zodResolver(UploadPhotoTrVesselAssessmentDetailZod),
     defaultValues: {
@@ -64,8 +66,8 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (id > 0) {
-      getDataById(id);
+    if (currentId > 0) {
+      getDataById(currentId);
     }
 
     async function getDataById(id: number) {
@@ -82,38 +84,71 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
         if (data.normalFileLink) {
           setImagePreview(data.normalFileLink);
         } else {
-          console.log("B");
+          setImagePreview(null);
         }
       } catch (err) {
         console.error("Failed to fetch data by ID:", err);
       }
     }
-  }, [id, setValue]);
+  }, [currentId, setValue]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setValue("fileName", file.name);
       setValue("photo", file);
-      setImagePreview(URL.createObjectURL(file)); // Update the preview when a file is selected
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
-  const onDetailSubmit = async (data: DetailData) => {
-    setLoading(true); // Start loading
+  const handleSave = async () => {
+    return await handleSubmit(async (data) => {
+      const success = await onDetailSubmit(data);
+      if (success) {
+        onSave();
+      }
+      return success;
+    })();
+  };
+
+  const handleNextWithSave = async () => {
+    return await handleSubmit(async (data) => {
+      const success = await onDetailSubmit(data);
+      if (success) {
+        const nextIndex = idList.indexOf(currentId) + 1;
+        if (nextIndex < idList.length) {
+          setCurrentId(idList[nextIndex]);
+        }
+      }
+      return success;
+    })();
+  };
+
+  const handlePrevious = () => {
+    const currentIndex = idList.indexOf(currentId);
+    if (currentIndex > 0) {
+      setCurrentId(idList[currentIndex - 1]);
+    }
+  };
+
+  const onDetailSubmit = async (
+    data: uploadPhotoTrVesselAssessmentDetailDto
+  ) => {
+    setLoading(true);
     try {
       const response = await uploadPhotoForCrew(data);
       if (response.status === 200) {
-        onSave();
         toast({
           description: "Photo Assessment Detail updated successfully.",
         });
+        return true; // Indicate success
       } else {
         toast({
           variant: "destructive",
           title: "Error",
           description: "Failed to upload photo.",
         });
+        return false; // Indicate failure
       }
     } catch (err) {
       toast({
@@ -123,11 +158,11 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
           err instanceof Error ? err.message : "Unknown error"
         }`,
       });
+      return false; // Indicate failure
     } finally {
-      setLoading(false); // End loading
+      setLoading(false);
     }
   };
-
   return (
     <FormProvider {...methods}>
       <form
@@ -174,7 +209,6 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
 
         {imagePreview && (
           <div className="mb-4 flex justify-center">
-            {" "}
             <img
               src={imagePreview}
               alt="Photo Preview"
@@ -184,25 +218,13 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
           </div>
         )}
 
-        {/* <FormItem>
-          <FormLabel>Upload Photo</FormLabel>
-          <FormControl>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-          </FormControl>
-          <FormMessage>{errors.fileName?.message}</FormMessage>
-        </FormItem> */}
         <FormItem>
           <FormLabel>Upload Photo</FormLabel>
           <FormControl>
             <input
               type="file"
               accept="image/*"
-              capture="environment" // Opens camera directly
+              capture="environment"
               onChange={handleFileChange}
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
@@ -228,25 +250,49 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
           )}
         />
 
-        <div className="flex justify-end mt-4">
-          <Button
-            type="button"
-            onClick={onClose}
-            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-          >
-            Close
-          </Button>
-          <Button
-            type="submit"
-            disabled={loading}
-            className={`w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-900 text-base font-medium text-white hover:bg-green-700"
-            } sm:ml-3 sm:w-auto sm:text-sm`}
-          >
-            {loading ? <span className="loading">saving...</span> : "Save"}
-          </Button>
+        <div className="flex justify-between mt-4">
+          <div className="flex space-x-4">
+            <Button
+              type="button"
+              onClick={handlePrevious}
+              disabled={idList.indexOf(currentId) <= 0}
+              className="mt-3 inline-flex justify-center rounded-md border shadow-sm px-4 py-2  bg-gray-400 hover:bg-gray-200 text-gray-700"
+            >
+              Previous
+            </Button>
+            <Button
+              type="button"
+              onClick={handleNextWithSave}
+              disabled={
+                idList.indexOf(currentId) >= idList.length - 1 || loading
+              }
+              className="mt-3 inline-flex justify-center rounded-md border shadow-sm px-4 py-2 bg-gray-400 hover:bg-gray-200 text-gray-700"
+            >
+              Next
+            </Button>
+          </div>
+
+          <div className="flex space-x-4">
+            <Button
+              type="button"
+              onClick={onClose}
+              className="mt-3 inline-flex justify-center rounded-md border shadow-sm px-4 py-2 bg-white text-gray-700"
+            >
+              Close
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSave} // Use handleSave for the "Save" button
+              disabled={loading}
+              className={`mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 ${
+                loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-900 text-white"
+              }`}
+            >
+              {loading ? "Saving..." : "Save"}
+            </Button>
+          </div>
         </div>
       </form>
     </FormProvider>
