@@ -37,7 +37,11 @@ import { getTrVesselAssessmentDetail } from "@/services/service_api_vesselAssess
 import DataTableCrewUpload from "@/components/Data-Table/data-table-crewUpload";
 import UploadPhotoForm from "@/components/form/upload-photo-form";
 import { ColumnDef } from "@tanstack/react-table";
-import { getTrVesselAssessmentByLinkForCrew, getTrVesselAssessmentDetailForCrew, saveTrVesselAssessmentForCrew } from "@/services/service_api_vesselAssessmentForCrew";
+import {
+  getTrVesselAssessmentByLinkForCrew,
+  getTrVesselAssessmentDetailForCrew,
+  saveTrVesselAssessmentForCrew,
+} from "@/services/service_api_vesselAssessmentForCrew";
 
 const CrewUploadForm = () => {
   const router = useRouter();
@@ -82,6 +86,7 @@ const CrewUploadForm = () => {
   const { toast } = useToast();
   const [id, setId] = useState<number | null>(null);
   const [vesselName, setVesselName] = useState<string | null>(null);
+  const [idList, setIdList] = useState<number[]>([]);
 
   const columnsDetail = [
     { header: "Item", accessorKey: "item" },
@@ -181,6 +186,8 @@ const CrewUploadForm = () => {
 
   const fetchDetail = async () => {
     const dataDetail = await getTrVesselAssessmentDetailForCrew(Number(id));
+    const ids = dataDetail.map((detail: { id: number }) => detail.id);
+    setIdList(ids);
     const groupedData = dataDetail.reduce((acc, item) => {
       const section = item.shipSection ?? "Unknown";
       (acc[section] = acc[section] || []).push(item);
@@ -267,6 +274,7 @@ const CrewUploadForm = () => {
                       onSave={() => {}}
                       id={0}
                       idHeader={Number(id)}
+                      idList={idList}
                     />
                   }
                   onSaveData={() => handleSaveDetail()}
