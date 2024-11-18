@@ -463,6 +463,17 @@ const EditVesselAssessmentForm = () => {
                         {loading ? "Close..." : "Close"}
                       </Button>
                     </>
+                  ) : status === "OPEN" ? (
+                    <>
+                      {" "}
+                      <Button
+                        type="submit"
+                        className="w-full md:w-auto bg-orange-700 hover:bg-orange-500"
+                        disabled={loading}
+                      >
+                        {loading ? "Generate Link..." : "Generate Link"}
+                      </Button>
+                    </>
                   ) : (
                     <></>
                   )}
