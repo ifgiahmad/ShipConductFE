@@ -276,7 +276,7 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
             <Button
               type="button"
               onClick={onClose}
-              className="mt-3 inline-flex justify-center rounded-md border shadow-sm px-4 py-2 bg-white text-gray-700"
+              className="mt-3 inline-flex justify-center rounded-md border shadow-sm px-4 py-2 bg-white hover:bg-gray-200 text-gray-700"
             >
               Close
             </Button>
@@ -287,7 +287,7 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
               className={`mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 ${
                 loading
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-green-900 text-white"
+                  : "bg-green-900 hover:bg-green-600 text-white"
               }`}
             >
               {loading ? "Saving..." : "Save"}
