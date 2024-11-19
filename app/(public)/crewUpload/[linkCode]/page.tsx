@@ -202,6 +202,10 @@ const CrewUploadForm = () => {
     fetchDetail();
   };
 
+  const handleCloseDetail = () => {
+    fetchDetail();
+  };
+
   const onSubmit = async (data: createTrVesselAssessmentDto) => {
     if (status === "OPEN") {
       data.mode = "GENERATE LINK";
@@ -277,6 +281,7 @@ const CrewUploadForm = () => {
                       idList={idList}
                     />
                   }
+                  onClose={() => handleCloseDetail()}
                   onSaveData={() => handleSaveDetail()}
                 />
               </CardContent>
