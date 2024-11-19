@@ -85,6 +85,8 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
           setImagePreview(data.normalFileLink);
         } else {
           setImagePreview(null);
+          setValue("fileName", "");
+          setValue("photo", null);
         }
       } catch (err) {
         console.error("Failed to fetch data by ID:", err);
