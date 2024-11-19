@@ -32,6 +32,7 @@ interface DataTableCrewUploadProps<TData extends HasId> {
   columns: ColumnDef<TData>[];
   modalContent: React.ReactNode;
   onSaveData: () => void;
+  onClose: () => void;
 }
 
 function DataTableCrewUpload<TData extends HasId>({
@@ -39,6 +40,7 @@ function DataTableCrewUpload<TData extends HasId>({
   columns,
   modalContent,
   onSaveData,
+  onClose,
 }: DataTableCrewUploadProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -75,6 +77,7 @@ function DataTableCrewUpload<TData extends HasId>({
 
   const handleCloseModal = () => {
     setModalOpen(false);
+    onClose();
   };
 
   const handleSaveModal = () => {
