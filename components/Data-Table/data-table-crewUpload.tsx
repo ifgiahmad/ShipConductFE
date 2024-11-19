@@ -92,6 +92,7 @@ function DataTableCrewUpload<TData extends HasId>({
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
+                <TableHead>Actions</TableHead>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {header.isPlaceholder
@@ -102,7 +103,6 @@ function DataTableCrewUpload<TData extends HasId>({
                         )}
                   </TableHead>
                 ))}
-                <TableHead>Actions</TableHead>
               </TableRow>
             ))}
           </TableHeader>
@@ -113,6 +113,14 @@ function DataTableCrewUpload<TData extends HasId>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                 >
+                  <TableCell>
+                    <Button
+                      className="ml-2  bg-orange-700 hover:bg-orange-400"
+                      onClick={() => handleOpenModal(row.original.id)}
+                    >
+                      Upload Photo
+                    </Button>
+                  </TableCell>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -121,14 +129,6 @@ function DataTableCrewUpload<TData extends HasId>({
                       )}
                     </TableCell>
                   ))}
-                  <TableCell>
-                    <Button
-                      className="ml-2  bg-orange-700"
-                      onClick={() => handleOpenModal(row.original.id)}
-                    >
-                      Upload Photo
-                    </Button>
-                  </TableCell>
                 </TableRow>
               ))
             ) : (
