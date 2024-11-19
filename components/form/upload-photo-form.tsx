@@ -85,8 +85,6 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
           setImagePreview(data.normalFileLink);
         } else {
           setImagePreview(null);
-          setValue("fileName", "");
-          setValue("photo", null);
         }
       } catch (err) {
         console.error("Failed to fetch data by ID:", err);
@@ -100,6 +98,10 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
       setValue("fileName", file.name);
       setValue("photo", file);
       setImagePreview(URL.createObjectURL(file));
+    } else {
+      setValue("fileName", "");
+      setValue("photo", null);
+      setImagePreview(null);
     }
   };
 
@@ -120,6 +122,14 @@ const UploadPhotoForm: React.FC<UploadPhotoFormProps> = ({
         const nextIndex = idList.indexOf(currentId) + 1;
         if (nextIndex < idList.length) {
           setCurrentId(idList[nextIndex]);
+
+          const fileInput = document.querySelector("input[type='file']");
+          if (fileInput) {
+            (fileInput as HTMLInputElement).value = "";
+          }
+          setImagePreview(null);
+          setValue("fileName", "");
+          setValue("photo", null);
         }
       }
       return success;
